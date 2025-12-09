@@ -1,0 +1,410 @@
+:root {
+	--bg1: #0f172a;
+	/* deep navy */
+	--bg2: #081225;
+	/* darker */
+	--glass: rgba(255, 255, 255, 0.06);
+	--accent1: #7c5cff;
+	/* purple */
+	--accent2: #24d39b;
+	/* mint */
+	--muted: rgba(255, 255, 255, 0.6);
+	--card-radius: 14px;
+	--shadow: 0 8px 30px rgba(2, 6, 23, 0.6);
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+		Roboto, "Helvetica Neue", Arial;
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+}
+
+* {
+	margin: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: radial-gradient(
+			1000px 400px at 10% 10%,
+			rgba(124, 92, 255, 0.12),
+			transparent 10%
+		),
+		radial-gradient(
+			800px 300px at 90% 90%,
+			rgba(36, 211, 155, 0.06),
+			transparent 10%
+		),
+		linear-gradient(180deg, var(--bg1), var(--bg2));
+	color: #e6eef8;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40px;
+}
+
+.wrap {
+	width: 100%;
+	max-width: 1100px;
+	display: grid;
+	grid-template-columns: 420px 1fr;
+	gap: 28px;
+	align-items: stretch;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.03),
+		rgba(255, 255, 255, 0.02)
+	);
+	border-radius: var(--card-radius);
+	padding: 24px;
+	box-shadow: var(--shadow);
+	backdrop-filter: blur(6px);
+	border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+header.brand {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 14px;
+}
+
+.logo {
+	width: 48px;
+	height: 48px;
+	border-radius: 10px;
+	display: grid;
+	place-items: center;
+	background: linear-gradient(135deg, var(--accent1), var(--accent2));
+	box-shadow: 0 6px 20px rgba(124, 92, 255, 0.12);
+	font-weight: 700;
+}
+
+h1 {
+	font-size: 20px;
+	margin: 0;
+}
+
+p.lead {
+	margin: 6px 0 18px;
+	color: var(--muted);
+	font-size: 13px;
+}
+
+form .field {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 12px;
+}
+
+label {
+	font-size: 12px;
+	color: var(--muted);
+	margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	padding: 12px;
+	border-radius: 10px;
+	color: inherit;
+	font-size: 14px;
+}
+
+.controls {
+	display: flex;
+	gap: 10px;
+	margin-top: 6px;
+}
+
+button.primary {
+	background: linear-gradient(90deg, var(--accent1), var(--accent2));
+	border: none;
+	padding: 12px 16px;
+	border-radius: 10px;
+	color: #061022;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 8px 22px rgba(124, 92, 255, 0.12);
+}
+
+button.ghost {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	padding: 12px 14px;
+	border-radius: 10px;
+	color: var(--muted);
+	cursor: pointer;
+}
+
+/* Right column: progress, logs */
+.status-area {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.progress-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.progress-bar {
+	height: 14px;
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.progress-inner {
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(90deg, var(--accent2), var(--accent1));
+	border-radius: 999px;
+	transition: width 400ms ease;
+}
+
+.meta-row {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+.pill {
+	padding: 6px 10px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.03);
+	font-size: 13px;
+	color: var(--muted);
+}
+
+.logs {
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.02),
+		rgba(255, 255, 255, 0.01)
+	);
+	padding: 14px;
+	border-radius: 10px;
+
+	/* NEW: fix height */
+	height: 150px;
+	overflow-y: auto;
+
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+	font-size: 13px;
+	color: #cfeaff;
+
+	/* Optional: smoother scrolling */
+	scroll-behavior: smooth;
+}
+
+.logs .line {
+	padding: 4px 0;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.02);
+}
+
+.download-area {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+a.download-btn {
+	display: inline-flex;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.06);
+	text-decoration: none;
+	color: inherit;
+	border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+footer.note {
+	color: var(--muted);
+	font-size: 12px;
+	margin-top: 8px;
+}
+
+/* small screens */
+@media (max-width: 880px) {
+	.wrap {
+		grid-template-columns: 1fr;
+	}
+
+	.card {
+		padding: 18px;
+	}
+}
+
+/* neat helper styles for status colours */
+.status-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 999px;
+	display: inline-block;
+}
+
+.st-idle {
+	background: #f59e0b;
+}
+
+.st-running {
+	background: #10b981;
+}
+
+.st-error {
+	background: #ef4444;
+}
+
+.st-done {
+	background: #60a5fa;
+}
+
+form#scrapeForm {
+	flex: 1;
+}
+
+/* Utility spacing */
+.spacer-8 {
+	height: 8px;
+}
+.spacer-10 {
+	height: 10px;
+}
+.spacer-12 {
+	height: 12px;
+}
+.spacer-14 {
+	height: 14px;
+}
+
+/* Flex utilities */
+.flex {
+	display: flex;
+}
+.flex-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.flex-center {
+	display: flex;
+	align-items: center;
+}
+.flex-gap-8 {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+.flex-gap-10 {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+/* Muted small text */
+.text-muted {
+	color: var(--muted);
+}
+.text-12 {
+	font-size: 12px;
+}
+.text-13 {
+	font-size: 13px;
+}
+.text-strong {
+	font-weight: 700;
+}
+.text-bold {
+	font-weight: 600;
+}
+
+/* Transparent card variant */
+.card-ghost {
+	margin-top: 14px;
+	padding: 12px;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+}
+
+/* Status block */
+.status-block {
+	margin-bottom: 6px;
+}
+
+/* Quick tips wrapper */
+.tips-title {
+	font-size: 13px;
+	font-weight: 600;
+}
+.tips-text {
+	font-size: 13px;
+	color: var(--muted);
+}
+
+/* Progress row */
+.progress-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+/* Download area */
+.download-hidden {
+	display: none;
+}
+
+/* Fix progress inner default width */
+.progress-inner {
+	width: 0%;
+}
+
+/* Log headers */
+.logs-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+/* Flex filler */
+.flex-fill {
+	flex: 1;
+}
+
+/* indeterminate progress animation */
+.progress-inner.indeterminate {
+	width: 100%;
+	background: linear-gradient(
+		90deg,
+		rgba(36, 211, 155, 0.18),
+		rgba(124, 92, 255, 0.4),
+		rgba(36, 211, 155, 0.18)
+	);
+	background-size: 200% 100%;
+	animation: prog-slide 1.1s linear infinite;
+	border-radius: 999px;
+}
+@keyframes prog-slide {
+	0% {
+		background-position: 0% 0%;
+	}
+	100% {
+		background-position: 200% 0%;
+	}
+}

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TrustedTrader Scraper — Frontend</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="card">
+            <header class="brand">
+                <div class="logo">TT</div>
+                <div>
+                    <h1>TrustedTrader.scot Scraper</h1>
+                    <p class="lead">Enter a region (city/county) and max results. The scraper runs on the server and
+                        returns a ListingPro-ready CSV.</p>
+                </div>
+            </header>
+
+            <form id="scrapeForm" autocomplete="off">
+                <div class="field">
+                    <label for="region">Region / City</label>
+                    <input id="region" name="region" type="text" value="Aberdeenshire" required />
+                </div>
+
+                <div class="field">
+                    <label for="limit">Maximum number of traders (0 = unlimited)</label>
+                    <input id="limit" name="limit" type="number" min="0" step="1" value="50" />
+                </div>
+
+                <div class="controls">
+                    <button id="startBtn" class="primary" type="submit">Start Scrape</button>
+                    <button id="cancelBtn" class="ghost" type="button">Cancel</button>
+                    <div class="flex-fill"></div>
+                    <div class="pill">Concurrency: 3</div>
+                </div>
+
+                <div class="spacer-8"></div>
+                <div class="note text-muted text-12">Note: CSV will be saved on the server and
+                    available for download once complete. Progress is streamed in real-time.</div>
+            </form>
+
+            <div class="spacer-10"></div>
+
+            <div class="card card-ghost">
+                <div class="flex-gap-8">
+                    <strong class="tips-title">Quick tips</strong>
+                    <span class="tips-text">Be polite — don't hammer the site.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-area">
+            <div class="card">
+                <div class="status-block flex-between">
+                    <div class="flex-gap-10">
+                        <span id="statusDot" class="status-dot st-idle"></span>
+                        <div>
+                            <div id="statusText" class="text-strong">Idle</div>
+                            <div id="jobInfo" class="text-muted text-12">No job running</div>
+                        </div>
+                    </div>
+                    <div class="pill" id="scrapedCount">Scraped: 0</div>
+                </div>
+
+                <div class="progress-wrap">
+                    <div class="progress-header">
+                        <div class="text-muted text-13">Overall progress</div>
+                        <div id="elapsed" class="text-muted text-13">00:00</div>
+                    </div>
+
+                    <div class="progress-bar" aria-hidden>
+                        <div id="progressInner" class="progress-inner"></div>
+                    </div>
+                </div>
+
+                <div class="spacer-12"></div>
+
+                <div class="meta-row flex-between">
+                    <div>
+                        <div class="text-muted text-13">Current category</div>
+                        <div id="currentCategory" class="text-bold">—</div>
+                    </div>
+                    <div>
+                        <div class="text-muted text-13">Current trader</div>
+                        <div id="currentTrader" class="text-bold">—</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card">
+                <div class="logs-header">
+                    <strong>Logs</strong>
+                    <div class="flex-gap-8">
+                        <button id="clearLogs" class="ghost" type="button">Clear</button>
+                    </div>
+                </div>
+
+                <div id="logs" class="logs"></div>
+
+                <div class="spacer-10"></div>
+
+                <div class="download-area">
+                    <a id="downloadLink" class="download-btn download-hidden" href="#">Download CSV</a>
+                    <div id="finishedNote" class="text-muted text-13">No file yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+
+</body>
+
+</html>
