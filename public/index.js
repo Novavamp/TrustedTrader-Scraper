@@ -122,7 +122,20 @@
         } else if (ev.type === 'category') {
             currentCategory.textContent = ev.data.name || '—';
         } else if (ev.type === 'trader') {
-            currentTrader.textContent = ev.data.url || ev.data.name || '—';
+            // Prefer name if sent, otherwise extract readable title from URL
+            let traderName = ev.data.name;
+
+            if (!traderName && ev.data.url) {
+                traderName = ev.data.url
+                    .split('/')                      // break into parts
+                    .pop()                           // take last part: "SGH-Joinery-0000930.html"
+                    .replace('.html', '')            // remove .html
+                    .replace(/-\d+$/, '')            // remove ID e.g. -0000930
+                    .replace(/-/g, ' ');             // turn hyphens into spaces
+            }
+
+            currentTrader.textContent = traderName || '—';
+
         } else if (ev.type === 'finished') {
             appendLog('Job finished. File: ' + (ev.data.file || 'unknown'));
             setStatus('Done');
