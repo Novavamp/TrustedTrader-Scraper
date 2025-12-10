@@ -1,7 +1,3 @@
-Here’s a clean, professional, GitHub-style **README.md** for your TrustedTrader Scraper project — formatted, structured, and ready to paste into your repo.
-
----
-
 # TrustedTrader.scot Scraper
 
 A high-performance Node.js scraper that extracts businesses from **TrustedTrader.scot**, organizes them by category and region, and outputs a fully structured **ListingPro-ready CSV**.
