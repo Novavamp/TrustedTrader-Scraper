@@ -38,15 +38,16 @@ const JOBS = {};
 --------------------------------------------------- */
 app.post("/api/scrape", (req, res) => {
   const { region, limit } = req.body;
+  const safeRegion = region && region.trim() ? region.trim() : "all_region";
   const jobId = randomUUID();
 
-  const outFile = `trustedtrader_${region.replace(/\s+/g, "_")}_${Date.now()}.csv`;
+  const outFile = `trustedtrader_${safeRegion.replace(/\s+/g, "_")}_${Date.now()}.csv`;
   const filePath = path.join(__dirname, "downloads", outFile);
 
   // Spawn CLI scraper
   const child = spawn("node", [
     path.join(__dirname, "scraper.js"),
-    "--region", region,
+    "--region", region || "",
     "--limit", String(limit || 0),
     "--out", filePath
   ]);

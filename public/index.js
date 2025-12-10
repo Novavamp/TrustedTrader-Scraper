@@ -56,6 +56,7 @@
 
         const region = document.getElementById('region').value.trim();
         const limit = Number(document.getElementById('limit').value) || 0;
+        const regionDisplay = region && region.trim() ? region.trim() : "All Region";
 
         try {
             setStatus('Starting job...');
@@ -67,7 +68,7 @@
             if (!res.ok) throw new Error('Server responded ' + res.status);
             const data = await res.json();
             jobId = data.jobId;
-            jobInfo.textContent = `Job ${jobId} — region: ${region}`;
+            jobInfo.textContent = `Job ${jobId} — region: ${regionDisplay}`;
             setStatus('Running');
             startTimer();
 
