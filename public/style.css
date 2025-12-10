@@ -71,6 +71,18 @@ body {
 	border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
+/* Make sure flex/grid children CAN shrink (very important) */
+.wrap,
+.status-area,
+.status-area > .card,
+.card,
+form#scrapeForm,
+.progress-wrap,
+.meta-row {
+	min-width: 0; /* allows children to shrink instead of forcing container width */
+	box-sizing: border-box;
+}
+
 header.brand {
 	display: flex;
 	align-items: center;
@@ -183,14 +195,7 @@ button.ghost {
 	align-items: center;
 }
 
-.pill {
-	padding: 6px 10px;
-	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.03);
-	font-size: 13px;
-	color: var(--muted);
-}
-
+/* Logs container: aggressive wrapping + hide x-overflow */
 .logs {
 	background: linear-gradient(
 		180deg,
@@ -199,22 +204,32 @@ button.ghost {
 	);
 	padding: 14px;
 	border-radius: 10px;
-
-	/* NEW: fix height */
 	height: 150px;
 	overflow-y: auto;
-
+	overflow-x: hidden; /* prevent horizontal scroll INSIDE logs */
+	box-sizing: border-box;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 	font-size: 13px;
 	color: #cfeaff;
 
-	/* Optional: smoother scrolling */
-	scroll-behavior: smooth;
+	/* Wrapping rules (aggressive) */
+	word-wrap: break-word;
+	overflow-wrap: anywhere;
+	word-break: break-all; /* strongest break option — breaks anywhere if needed */
+	white-space: pre-wrap; /* preserve new lines but allow wrapping */
+	hyphens: auto;
+	max-width: 100%;
 }
 
+/* Each log line should never grow wider than the container */
 .logs .line {
-	padding: 4px 0;
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.02);
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	white-space: pre-wrap;
+	word-break: break-all;
+	overflow-wrap: anywhere;
 }
 
 .download-area {
@@ -406,5 +421,82 @@ form#scrapeForm {
 	}
 	100% {
 		background-position: 200% 0%;
+	}
+}
+
+.btn-disabled {
+	opacity: 0.5;
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+	html,
+	body {
+		height: unset;
+	}
+
+	body {
+		padding: 20px;
+	}
+
+	.controls {
+		flex-direction: column;
+	}
+
+	button.primary,
+	button.ghost {
+		width: 100%;
+		text-align: center;
+	}
+
+	input[type="text"],
+	input[type="number"],
+	select {
+		font-size: 15px;
+		padding: 14px;
+	}
+
+	.meta-row.flex-between {
+		font-size: 0.75rem;
+	}
+
+	.logs {
+		height: 200px;
+	}
+}
+
+@media (max-width: 420px) {
+	h1 {
+		font-size: 18px;
+	}
+
+	p.lead {
+		font-size: 12px;
+	}
+
+	.tips-title,
+	.tips-text,
+	.text-12,
+	.text-13 {
+		font-size: 12px;
+	}
+}
+
+@media (max-width: 350px) {
+	body {
+		padding: 10px;
+	}
+
+	.wrap {
+		gap: 14px;
+	}
+
+	.card {
+		padding: 14px;
+	}
+
+	.controls {
+		gap: 6px;
 	}
 }

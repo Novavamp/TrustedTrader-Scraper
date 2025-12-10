@@ -50,7 +50,9 @@
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        startBtn.disabled = true; cancelBtn.disabled = false;
+        startBtn.disabled = true;
+        startBtn.classList.add('btn-disabled');
+        cancelBtn.disabled = false;
         downloadLink.style.display = 'none'; finishedNote.textContent = 'Starting...';
         logsEl.innerHTML = '';
 
@@ -94,7 +96,9 @@
         } catch (err) {
             appendLog('Start error: ' + err.message);
             setStatus('Error');
-            startBtn.disabled = false; cancelBtn.disabled = true;
+            startBtn.disabled = false;
+            startBtn.classList.remove('btn-disabled');
+            cancelBtn.disabled = true;
             finishedNote.textContent = 'Error starting job';
         }
     });
@@ -139,7 +143,9 @@
         } else if (ev.type === 'finished') {
             appendLog('Job finished. File: ' + (ev.data.file || 'unknown'));
             setStatus('Done');
-            startBtn.disabled = false; cancelBtn.disabled = true;
+            startBtn.disabled = false;
+            startBtn.classList.remove('btn-disabled');
+            cancelBtn.disabled = true;
             stopTimer();
             if (ev.data.file) {
                 downloadLink.href = ev.data.file;
