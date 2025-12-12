@@ -1,202 +1,161 @@
 import express from 'express';
-import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { randomUUID } from 'crypto';
 import cors from 'cors';
+import { randomUUID } from 'crypto';
+import { runScraper } from './lib/scraper.js';
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Serve frontend & downloads
 const __dirname = path.resolve();
-app.use(express.static(path.join(__dirname, "public")));
-app.use('/downloads', express.static(path.join(__dirname, 'downloads')));
 const downloadsDir = path.join(__dirname, "downloads");
 if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
 
-// Store running scraper jobs
-const JOBS = {};
-// JOB STRUCTURE:
-// {
-//   id,
-//   child,
-//   last,
-//   scraped,
-//   total,
-//   currentCategory,
-//   currentTrader,
-//   file,
-//   start,
-//   finished
-// }
+app.use(express.static(path.join(__dirname, "public")));
+app.use('/downloads', express.static(downloadsDir));
 
+const JOBS = {}; // store jobs in memory
 
-/* ---------------------------------------------------
-   START SCRAPER JOB
---------------------------------------------------- */
+/* -----------------------------
+   Start scrape job
+----------------------------- */
 app.post("/api/scrape", (req, res) => {
-  const { region, limit } = req.body;
-  const safeRegion = region && region.trim() ? region.trim() : "all_region";
-  const jobId = randomUUID();
+    const { region, limit } = req.body;
+    const jobId = randomUUID();
 
-  const outFile = `trustedtrader_${safeRegion.replace(/\s+/g, "_")}_${Date.now()}.csv`;
-  const filePath = path.join(__dirname, "downloads", outFile);
+    JOBS[jobId] = {
+        id: jobId,
+        scraped: 0,
+        total: Number(limit) || 0,
+        currentCategory: null,
+        currentTrader: null,
+        last: '',
+        finished: false,
+        file: null,
+        clients: new Set() // SSE connections for this job
+    };
 
-  // Spawn CLI scraper
-  const child = spawn("node", [
-    path.join(__dirname, "scraper.js"),
-    "--region", region || "",
-    "--limit", String(limit || 0),
-    "--out", filePath
-  ]);
+    // async scraper run
+    (async () => {
+        try {
+            await runScraper({
+                region,
+                limit: Number(limit),
+                outFile: path.join(downloadsDir, `trustedtrader_${(region || 'all').replace(/\s+/g, '_')}_${Date.now()}.csv`),
+                onProgress: (evt) => {
+                    const j = JOBS[jobId];
+                    if (!j) return;
 
-  JOBS[jobId] = {
-    id: jobId,
-    child,
-    file: null,
-    last: "",
-    scraped: 0,
-    total: Number(limit) || 0,
-    currentCategory: null,
-    currentTrader: null,
-    start: Date.now(),
-    finished: false
-  };
+                    switch (evt.type) {
+                        case 'progress':
+                            if (evt.data.scraped !== undefined) j.scraped = evt.data.scraped;
+                            if (evt.data.total !== undefined) j.total = evt.data.total;
+                            break;
+                        case 'category':
+                            j.currentCategory = evt.data.name;
+                            break;
+                        case 'trader':
+                            j.currentTrader = evt.data.url;
+                            break;
+                        case 'log':
+                            j.last = evt.data.text;
+                            break;
+                        case 'finished':
+                            j.finished = true;
+                            j.file = "/downloads/" + path.basename(evt.data.file);
+                            break;
+                        case 'error':
+                            j.last = "[error] " + evt.data.text;
+                            break;
+                    }
 
-  /* Parse scraper stdout for data to feed SSE */
-  child.stdout.on("data", chunk => {
-    const lines = String(chunk).split(/\r?\n/).filter(Boolean);
+                    // push event directly to all SSE clients
+                    j.clients.forEach(res => {
+                        try {
+                            res.write(`data: ${JSON.stringify(evt)}\n\n`);
+                        } catch { }
+                    });
+                }
+            });
+        } catch (err) {
+            const j = JOBS[jobId];
+            if (j) {
+                j.last = "[fatal] " + err.message;
+                j.finished = true;
+                const evt = { type: 'error', data: { text: err.message } };
+                j.clients.forEach(res => {
+                    try { res.write(`data: ${JSON.stringify(evt)}\n\n`); } catch { }
+                });
+            }
+        }
+    })();
 
-    for (const line of lines) {
-      JOBS[jobId].last = line;
-
-      // Detect total count (if your scraper outputs it)
-      const tot = line.match(/total traders:\s*(\d+)/i);
-      if (tot) JOBS[jobId].total = Number(tot[1]);
-
-      // Detect scraped count
-      const scr = line.match(/scraped \(total so far\):\s*(\d+)/i);
-      if (scr) JOBS[jobId].scraped = Number(scr[1]);
-
-      // Detect category
-      const cat = line.match(/^Processing category "([^"]+)"/i);
-      if (cat) JOBS[jobId].currentCategory = cat[1];
-
-      // Detect trader
-      const tr = line.match(/-> scraping trader\s+(.*)$/i);
-      if (tr) JOBS[jobId].currentTrader = tr[1];
-    }
-  });
-
-  child.stderr.on("data", err => {
-    JOBS[jobId].last = "[stderr] " + String(err);
-  });
-
-  child.on("exit", () => {
-    JOBS[jobId].finished = true;
-    JOBS[jobId].file = "/downloads/" + outFile;
-  });
-
-  res.json({ jobId });
+    res.json({ jobId });
 });
 
-/* ---------------------------------------------------
-   CANCEL SCRAPER JOB
---------------------------------------------------- */
-app.post("/api/scrape/cancel", (req, res) => {
-  const { jobId } = req.body;
-  const job = JOBS[jobId];
-
-  if (!job) return res.status(404).json({ error: "Job not found" });
-  if (job.child) job.child.kill("SIGINT");
-
-  return res.json({ message: "Cancellation requested" });
-});
-
-/* ---------------------------------------------------
-   SEND EVENTS (SSE)
---------------------------------------------------- */
+/* -----------------------------
+   SSE: stream events in real-time
+----------------------------- */
 app.get("/api/scrape/events", (req, res) => {
-  const { jobId } = req.query;
-  const job = JOBS[jobId];
-
-  if (!job) {
-    res.writeHead(404);
-    return res.end("Unknown jobId");
-  }
-
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
-    "Access-Control-Allow-Origin": "*"
-  });
-
-  const int = setInterval(() => {
-    if (!JOBS[jobId]) return;
-
-    const j = JOBS[jobId];
-    const events = [];
-
-    // Log event
-    if (j.last) {
-      events.push({ type: "log", data: { text: j.last } });
-      j.last = null;
+    const { jobId } = req.query;
+    const job = JOBS[jobId];
+    if (!job) {
+        res.writeHead(404);
+        return res.end("Unknown jobId");
     }
 
-    // Progress event
-    events.push({
-      type: "progress",
-      data: { scraped: j.scraped, total: j.total }
+    res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*"
     });
 
-    // Category event
-    if (j.currentCategory) {
-      events.push({
-        type: "category",
-        data: { name: j.currentCategory }
-      });
-    }
+    // add this client to the job's SSE clients
+    job.clients.add(res);
 
-    // Trader event
-    if (j.currentTrader) {
-      events.push({
-        type: "trader",
-        data: { url: j.currentTrader }
-      });
-    }
+    // send initial snapshot
+    const snapshot = {
+        type: 'status',
+        data: {
+            scraped: job.scraped,
+            total: job.total,
+            currentCategory: job.currentCategory,
+            currentTrader: job.currentTrader,
+            finished: job.finished,
+            file: job.file,
+            last: job.last
+        }
+    };
+    res.write(`data: ${JSON.stringify(snapshot)}\n\n`);
 
-    // Finish event
-    if (j.finished) {
-      events.push({
-        type: "finished",
-        data: { file: j.file }
-      });
-
-      events.forEach(e =>
-        res.write(`data: ${JSON.stringify(e)}\n\n`)
-      );
-
-      clearInterval(int);
-      return;
-    }
-
-    // Push all events now
-    events.forEach(e =>
-      res.write(`data: ${JSON.stringify(e)}\n\n`)
-    );
-
-  }, 500);
-
-  req.on("close", () => clearInterval(int));
+    // remove client on disconnect
+    req.on('close', () => job.clients.delete(res));
 });
 
-/* ---------------------------------------------------
-   SERVER START
---------------------------------------------------- */
+/* -----------------------------
+   Cancel job
+----------------------------- */
+app.post("/api/scrape/cancel", (req, res) => {
+    const { jobId } = req.body;
+    const job = JOBS[jobId];
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    job.finished = true;
+    job.last = "Job cancelled by user.";
+
+    const evt = { type: 'log', data: { text: job.last } };
+    job.clients.forEach(res => {
+        try { res.write(`data: ${JSON.stringify(evt)}\n\n`); } catch { }
+    });
+
+    res.json({ message: "Cancellation requested" });
+});
+
+/* -----------------------------
+   Start server
+----------------------------- */
 const PORT = 3000;
-app.listen(PORT, () =>
-  console.log(`Scraper server running at http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
