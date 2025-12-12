@@ -64,8 +64,16 @@ app.post("/api/scrape", (req, res) => {
                             j.last = evt.data.text;
                             break;
                         case 'finished':
+                            // create a public URL path (served from /downloads)
+                            const publicFile = `/downloads/${path.basename(evt.data.file)}`;
+
                             j.finished = true;
-                            j.file = "/downloads/" + path.basename(evt.data.file);
+                            j.file = publicFile;
+
+                            // overwrite the event's file so we don't leak server filesystem paths to clients
+                            evt.data.file = publicFile;
+
+                            console.log('Saved file:', evt.data.file);
                             break;
                         case 'error':
                             j.last = "[error] " + evt.data.text;
