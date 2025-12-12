@@ -34,10 +34,10 @@ app.post("/api/scrape", (req, res) => {
         last: '',
         finished: false,
         file: null,
-        clients: new Set() // SSE connections for this job
+        clients: new Set(), // SSE connections for this job
+        events: []          // last 50 events buffer
     };
 
-    // async scraper run
     (async () => {
         try {
             await runScraper({
@@ -48,6 +48,7 @@ app.post("/api/scrape", (req, res) => {
                     const j = JOBS[jobId];
                     if (!j) return;
 
+                    // update job state
                     switch (evt.type) {
                         case 'progress':
                             if (evt.data.scraped !== undefined) j.scraped = evt.data.scraped;
@@ -71,11 +72,13 @@ app.post("/api/scrape", (req, res) => {
                             break;
                     }
 
-                    // push event directly to all SSE clients
+                    // push to buffer
+                    j.events.push(evt);
+                    if (j.events.length > 50) j.events.shift();
+
+                    // send event to all clients
                     j.clients.forEach(res => {
-                        try {
-                            res.write(`data: ${JSON.stringify(evt)}\n\n`);
-                        } catch { }
+                        try { res.write(`data: ${JSON.stringify(evt)}\n\n`); } catch { }
                     });
                 }
             });
@@ -85,6 +88,7 @@ app.post("/api/scrape", (req, res) => {
                 j.last = "[fatal] " + err.message;
                 j.finished = true;
                 const evt = { type: 'error', data: { text: err.message } };
+                j.events.push(evt);
                 j.clients.forEach(res => {
                     try { res.write(`data: ${JSON.stringify(evt)}\n\n`); } catch { }
                 });
@@ -113,8 +117,13 @@ app.get("/api/scrape/events", (req, res) => {
         "Access-Control-Allow-Origin": "*"
     });
 
-    // add this client to the job's SSE clients
+    // add client
     job.clients.add(res);
+
+    // send buffered events first
+    if (job.events && job.events.length) {
+        job.events.forEach(ev => res.write(`data: ${JSON.stringify(ev)}\n\n`));
+    }
 
     // send initial snapshot
     const snapshot = {
@@ -132,7 +141,10 @@ app.get("/api/scrape/events", (req, res) => {
     res.write(`data: ${JSON.stringify(snapshot)}\n\n`);
 
     // remove client on disconnect
-    req.on('close', () => job.clients.delete(res));
+    req.on('close', () => {
+        job.clients.delete(res);
+        console.log(`[sse] client disconnected for job ${jobId}`);
+    });
 });
 
 /* -----------------------------
@@ -147,6 +159,7 @@ app.post("/api/scrape/cancel", (req, res) => {
     job.last = "Job cancelled by user.";
 
     const evt = { type: 'log', data: { text: job.last } };
+    job.events.push(evt);
     job.clients.forEach(res => {
         try { res.write(`data: ${JSON.stringify(evt)}\n\n`); } catch { }
     });
