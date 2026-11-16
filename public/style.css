@@ -500,3 +500,16 @@ form#scrapeForm {
 		gap: 6px;
 	}
 }
+
+
+/* Portfolio polish: keyboard access and resilient narrow-screen layout. */
+:where(a, button, input, select):focus-visible { outline: 3px solid #24d39b; outline-offset: 3px; }
+button, a.download-btn { transition: transform .18s ease, filter .18s ease, box-shadow .18s ease; }
+button:hover, a.download-btn:hover { filter: brightness(1.08); }
+@media (max-width: 600px) {
+  body { align-items: flex-start; padding: 14px; }
+  .wrap { gap: 14px; }
+  .card { padding: 16px; }
+  .meta-row { flex-wrap: wrap; }
+  .download-area { flex-wrap: wrap; }
+}
