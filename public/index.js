@@ -148,7 +148,7 @@
             cancelBtn.disabled = true;
             stopTimer();
             if (ev.data.file) {
-                downloadLink.href = ev.data.file;
+                downloadLink.href = `/api/scrape/download/${encodeURIComponent(jobId)}`;
                 downloadLink.style.display = 'inline-flex';
                 finishedNote.textContent = 'Ready to download';
                 downloadLink.textContent = 'Download CSV';
