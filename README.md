@@ -1,4 +1,10 @@
-# TrustedTrader.scot Scraper
+<div align="center">
+
+# TrustedTrader Business Directory Scraper
+
+![Node.js](https://img.shields.io/badge/Node.js-runtime-339933?logo=nodedotjs&logoColor=white) ![Express](https://img.shields.io/badge/Express-server-000000?logo=express&logoColor=white)
+
+</div>
 
 A high-performance Node.js scraper that extracts businesses from **TrustedTrader.scot**, organizes them by category and region, and outputs a fully structured **ListingPro-ready CSV**.
 Includes a polished real-time frontend with live progress, logs, category tracking, and CSV download.
