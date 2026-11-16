@@ -1,217 +1,70 @@
-<div align="center">
-
 # TrustedTrader Business Directory Scraper
 
-![Node.js](https://img.shields.io/badge/Node.js-runtime-339933?logo=nodedotjs&logoColor=white) ![Express](https://img.shields.io/badge/Express-server-000000?logo=express&logoColor=white)
+A Node.js and Express application that collects publicly visible business-directory listing data and exports it as a CSV for downstream directory imports.
 
-</div>
+The project combines HTML parsing, asynchronous scraping, a browser interface, and Server-Sent Events (SSE) for live job progress.
 
-A high-performance Node.js scraper that extracts businesses from **TrustedTrader.scot**, organizes them by category and region, and outputs a fully structured **ListingPro-ready CSV**.
-Includes a polished real-time frontend with live progress, logs, category tracking, and CSV download.
+## Features
 
----
+- Filter collection by region or scan the directory's available regions.
+- Parse listing details into a structured CSV.
+- Stream category, listing, and progress events to the browser with SSE.
+- Display job progress and provide a CSV download when processing completes.
+- Use configurable request delays, concurrency, and retry backoff in the scraper module.
 
-## 🚀 Features
+## Architecture
 
-### ✅ **Full Site Scraping**
-
-* Scrape a **single region** (e.g., “Edinburgh”, “Dundee”, “Aberdeenshire”)
-* Or **leave region blank** → automatically scrape *all available regions*
-
-### ⚙️ **Smart Architecture**
-
-* Server streams progress via **Server-Sent Events (SSE)**
-* Frontend updates live with:
-
-  * Current category
-  * Current trader
-  * Total scraped count
-  * Overall progress bar
-  * Real-time logs
-
-### 📄 **CSV Output**
-
-* Generates ListingPro-compatible CSV
-* Auto-saves after each category
-* Downloadable immediately after job completion
-
-### 🧼 **Frontend UI**
-
-* Modern glassmorphic UI
-* Mobile-responsive
-* Log-safe rendering (handles long strings without breaking layout)
-
----
-
-## 📂 Project Structure
-
-```
-/project-root
-│── server.js              # Server (Node.js, Express, SSE)
-│── scraper.js            # The TrustedTrader scraper logic
-│── public/
-│     ├── index.html      # Frontend UI
-│     ├── style.css       # Polished UI styles
-│     └── index.js        # Frontend logic & SSE listener
-│── downloads/            # Output CSV files
-│── package.json
-│── README.md
+```mermaid
+flowchart TD
+  Browser[Browser UI] --> API[Express API]
+  API --> Runner[Scraper module]
+  Runner --> Target[Directory website]
+  Runner --> CSV[CSV export]
+  Runner --> Events[Progress events]
+  Events --> SSE[SSE endpoint]
+  SSE --> Browser
 ```
 
----
+## Stack
 
-## 🛠️ Tech Stack
+- Node.js with ES modules
+- Express
+- Axios and Cheerio
+- JSON2CSV
+- Vanilla JavaScript and EventSource
 
-### **Backend**
-
-* Node.js (ES modules)
-* Express.js
-* Axios
-* Cheerio
-* Server-Sent Events (SSE)
-* FS streams for fast CSV writing
-
-### **Frontend**
-
-* Vanilla JavaScript
-* Styled UI (glassmorphism)
-* Live progress tracking
-* Log streaming
-
----
-
-## 📦 Installation
-
-Clone the repo:
+## Run locally
 
 ```bash
 git clone https://github.com/Novavamp/TrustedTrader-Scraper.git
 cd TrustedTrader-Scraper
-```
-
-Install dependencies:
-
-```bash
 npm install
+npm start
 ```
 
-Start the server:
+Open `http://localhost:4000`.
+
+## Usage
+
+1. Enter a region, or leave it blank to use the directory-wide category index.
+2. Enter a result limit. Use `0` for no configured limit.
+3. Start the job and monitor its progress.
+4. Download the generated CSV when complete.
+
+## CSV fields
+
+The scraper maps available listing information into fields intended for directory imports. Missing source fields may be blank. The exact available fields depend on the listing page.
+
+## Important operational notes
+
+This repository is an educational project and has not been hardened as a public multi-user scraping service. The current server keeps job state in memory, exposes job events by identifier, serves generated files from a static downloads route, and does not provide user authentication or durable job storage. Do not deploy it to an untrusted public network without adding authentication, per-user authorization, private download handling, request validation, rate limits, durable job state, and reliable cancellation.
+
+The scraper should be used only where collection is permitted. Respect the target site's terms, robots guidance, rate limits, and applicable privacy and data-protection requirements.
+
+## Development
 
 ```bash
-node index.js
+npm test
 ```
 
-Open in browser:
-
-```
-http://localhost:3000
-```
-
----
-
-## 🧩 Usage
-
-### ▶️ Start a Scrape
-
-Go to the frontend and enter:
-
-* **Region (optional)**
-  Leave empty to scrape **all regions**
-
-* **Limit (optional)**
-  `0` = unlimited
-  Any number = stop after total traders reach limit
-
-Click **Start Scrape**.
-
-### 📡 Real-Time Updates
-
-You’ll see:
-
-* Overall progress bar
-* Current region
-* Current category
-* Current trader name
-* Live log feed
-* Total count
-
-### 📥 Download CSV
-
-When scraping finishes:
-
-* A **Download CSV** button appears
-* File is saved inside `downloads/` on server as:
-
-```
-trustedtrader_<region>_<timestamp>.csv
-```
-
-For example:
-
-```
-trustedtrader_Edinburgh_1765371054630.csv
-```
-
-Or if region was blank:
-
-```
-trustedtrader_ALL_REGIONS_1765371054630.csv
-```
-
----
-
-## 🗂 CSV Output Format
-
-Each row includes:
-
-```
-title
-email
-phone
-category
-address
-website
-city
-county
-postcode
-description
-reviews
-rating
-latitude
-longitude
-```
-
-(Depending on available fields — scraper fills blank if missing.)
-
----
-
-## 🧪 Development Notes
-
-* The scraper uses polite delays to avoid hammering TrustedTrader.
-* Real-time SSE ensures the UI never freezes.
-* Long URLs/logs auto-wrap to prevent mobile-layout overflow.
-* The scraper stops early if the limit is reached.
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome!
-If submitting:
-
-1. Prettify code (`npm run format` if available)
-2. Follow ES module import style
-3. Keep UI minimal + performant
-
----
-
-## ⚠️ Legal Notice
-
-This tool is for **educational and personal use**.
-Before scraping any website, ensure you comply with their **Terms of Service** and local laws.
-
----
-
-## ⭐ Support
-
-If you found this useful, star ⭐ the repo — it helps visibility.
+The test command uses Node's built-in test runner. Add focused tests when changing parsing, job lifecycle, or CSV behaviour.
